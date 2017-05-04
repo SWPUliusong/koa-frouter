@@ -1,10 +1,10 @@
 {
-  "name": "koa-frouter",
-  "version": "0.5.0",
+  "name": "koa-paths-router",
+  "version": "0.0.2",
   "description": "File/Folder as `path`, another router middleware for koa.",
   "main": "index.js",
   "scripts": {
-    "test": "DEBUG=* node --harmony ./example/app"
+    "test": "node ./example/app"
   },
   "keywords": [
     "koa",
@@ -13,14 +13,15 @@
     "frouter"
   ],
   "dependencies": {
-    "koa-rewrite": "https://github.com/nswbmw/rewrite/archive/1.1.1.tar.gz",
-    "koa-route": "^2.4.0",
-    "ls-sync": "^0.2.1"
+    "koa-router": "^7.1.1"
   },
   "devDependencies": {
     "koa": "*"
   },
-  "author": "nswbmw",
+  "author": "SWPUliusong",
   "license": "MIT",
-  "repository": "https://github.com/MangroveTech/koa-frouter.git"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SWPUliusong/koa-frouter.git"
+  }
 }

@@ -4,9 +4,10 @@ var router = require('..');
 var app = koa();
 
 app.use(router(app, {
-  root: './example/router',
+  root: './example/routes',
   // root: require('path').join(__dirname, 'router'),
-  wildcard: '_'
+  _: true
+  // '_' will be replace by '/'
 }));
 
 app.listen(3000, function () {

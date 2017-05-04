@@ -4,7 +4,7 @@ File/Folder as `path`, another router middleware for koa.
 
 ### Install
 
-    npm i koa-frouter --save
+    npm i koa-paths-router --save
 
 ### Usage
 
@@ -14,7 +14,9 @@ router(app, options)
 - app: {Object} koa instance.
 - options: {Object|String->root}
   - root: {String} router directory
-  - wildcard: {String} will replace it with ':'
+  - \_: {Boolean} '_' will be replace by '/'
+  - $: {Boolean} '$' will be replace by ':'
+  - "!": {Boolean} '!' will be replace by '?'
 
 ### Example
 
@@ -24,17 +26,17 @@ router(app, options)
 ├── app.js
 ├── package.json
 ├── ...
-└── router
+└── routes
     ├── users
-    │   └── *uid.js
+    │   └── $uid.js
     │
     ├── posts
     │   ├── month
-    │   │   └── *id.js
+    │   │   └── $id.js
     │   ├── week
-    │   │   └── *id.js
+    │   │   └── $id!.js
     │   └── day
-    │       └── *id.js
+    │       └── $id.js
     ├── index.js
     └── links.js
 ```
@@ -42,62 +44,71 @@ router(app, options)
 **\*uid.js**
 
 ```
-exports.post = function* (uid) { ... }
+const validator = require("./validator")
+exports.post = [
+    validator.isLogin(),
+    validator.password(),
+    async cxt => {
+
+        // let data = await ....
+        cxt.status = 200
+        cxt.body = {
+            // data
+        }
+    }
+]
 ```
 
 **\*id.js**
 
 ```
-exports.get = function* (id) { ... }
+exports.get = async cxt => {
+
+    // let data = await ....
+    cxt.status = 200
+    cxt.body = {
+        // data
+    }
+}
 ```
 
 **index.js**
 
 ```
-exports.get = function* () { ... }
+exports.get = async cxt => {
+
+    // let data = await ....
+    cxt.status = 200
+    cxt.body = {
+        // data
+    }
+}
 ```
 
 **links.js**
 
 ```
-exports.get = function* () { ... }
+exports.get = cxt => {
+
+    // let data = ....
+    cxt.status = 200
+    cxt.body = {
+        // data
+    }
+}
 ```
 
 **app.js**
 
 ```
 var koa = require('koa');
-var router = require('koa-frouter');
+var router = require('koa-file-router');
 
 var app = koa();
 app.use(router(app, {
-  root: './router'
+  root: './router',
+  _: true
 }));
-app.listen(3000);
-```
-equal to:
-
-```
-var koa = require('koa');
-var _ = require('koa-route');
-
-var users = require('./router/users/*uid.js');
-var month = require('./router/posts/month/*id.js');
-var week = require('./router/posts/week/*id.js');
-var day = require('./router/posts/day/*id.js');
-var links = require('./router/links.js');
-var index = require('./router/index.js');
-
-var app = koa();
-
-app.use(_.post('/users/:uid', users.post));
-app.use(_.get('/posts/month/:id', month.get));
-app.use(_.get('/posts/week/:id', week.get));
-app.use(_.get('/posts/day/:id', day.get));
-app.use(_.get('/links', links.get));
-app.use(_.get('/', index.get));
-app.use(_.get('/index', index.get));
-
 app.listen(3000);
 ```
 

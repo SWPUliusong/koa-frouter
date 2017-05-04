@@ -1,43 +1,69 @@
-var path = require('path');
-var ls = require('ls-sync');
-var route = require('koa-route');
-var rewrite = require('koa-rewrite');
+const path = require("path")
+const formatPath = require("./formatPath")
+const ls = require("./ls")
+const config = require("./config")
+const Router = require("koa-router")
 
-module.exports = function (app, options) {
-  if (typeof options === 'string') {
-    options = {root: options};
-  } else if (!options || !options.root) {
-    throw new Error('`root` config required.');
-  }
-  var wildcard = options.wildcard || '*';
-  var root = options.root;
+let router = new Router()
 
-  //rewrite / to /index
-  app.use(rewrite('/', '/index'));
+function frouter(app, opt, callback) {
 
-  ls(root).forEach(function (filePath) {
-    if (path.extname(filePath) !== '.js') {
-      return;
+    if (!opt) {
+        throw new Error('root config required.');
     }
-    var exportFuncs = require(filePath);
-    var pathRegexp = formatPath(filePath, root, wildcard);
-    for (var method in exportFuncs) {
-      try {
-        exportFuncs[method].pathRegexp = pathRegexp;
-        app.use(route[method.toLowerCase()](pathRegexp, exportFuncs[method]));
-      } catch (e) {}
-    };
-  });
 
-  return function* frouter(next) {
-    yield* next;
-  };
-};
+    if (typeof opt === 'string') {
+        if (!path.isAbsolute(opt)) {
+            opt = path.join(process.cwd(), opt);
+        }
+        opt = { root: opt }
+    }
 
-function formatPath(filePath, root, wildcard) {
-  return filePath
-    .replace(path.resolve(process.cwd(), root), '')
-    .replace(/\\/g, '/')
-    .replace(new RegExp('/\\' + wildcard, 'g'), '/:')
-    .split('.')[0];
+    opt = config(opt);
+
+    let root = opt.root;
+
+    ls(root).forEach(function (filepath) {
+        let modulePath = path.resolve(process.cwd(), filepath)
+        let exportFuncs = require(modulePath);
+
+        root = root.replace(/^(\.\/)?/, '')
+        let pathRegexp = formatPath(filepath, root, opt);
+
+        if (callback) {
+            pathRegexp = callback(pathRegexp) || pathRegexp
+        }
+
+        for (let method in exportFuncs) {
+
+            if (!Array.isArray(exportFuncs[method])) {
+                exportFuncs[method] = [exportFuncs[method]]
+            }
+            exportFuncs[method].unshift(pathRegexp)
+
+            router[method].apply(router, exportFuncs[method])
+            if (opt.debug && process.env.NODE_ENV === 'development') {
+                console.log(
+                    '%s%s%s -> %s%s%s',
+                    '\x1B[32m\x1B[1m',
+                    pathRegexp,
+                    '\x1B[22m\x1B[39m',
+                    '\x1B[36m',
+                    method.toUpperCase(),
+                    '\x1B[39m'
+                )
+            }
+        };
+    });
+
+    app
+        .use(router.routes())
+        .use(router.allowedMethods());
+
+    return async (cxt, next) => {
+        await next()
+    }
+
 }
+
+module.exports = frouter
