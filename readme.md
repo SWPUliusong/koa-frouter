@@ -15,8 +15,6 @@ router(app, options)
 - options: {Object|String->root}
   - root: {String} router directory
   - \_: {Boolean} '_' will be replace by '/'
-  - $: {Boolean} '$' will be replace by ':'
-  - "!": {Boolean} '!' will be replace by '?'
 
 ### Example
 
